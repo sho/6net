@@ -11,7 +11,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence
+from typing import Iterable, Iterator, Optional, Sequence
 
 
 TOKEN_FIELDS = ("input_tokens", "output_tokens", "cache_write", "cache_read")
@@ -42,8 +42,8 @@ class ScanStats:
 
 @dataclass(frozen=True)
 class DateRange:
-    since: date | None = None
-    until: date | None = None
+    since: Optional[date] = None
+    until: Optional[date] = None
 
     def includes(self, value: date) -> bool:
         return not (
@@ -52,7 +52,7 @@ class DateRange:
         )
 
     @property
-    def earliest_timestamp(self) -> float | None:
+    def earliest_timestamp(self) -> Optional[float]:
         if self.since is None:
             return None
         local_midnight = datetime.combine(self.since, time.min).astimezone()
@@ -68,7 +68,7 @@ def parse_date(value: str) -> date:
         ) from error
 
 
-def parse_timestamp(value: object) -> datetime | None:
+def parse_timestamp(value: object) -> Optional[datetime]:
     if not isinstance(value, str):
         return None
     try:
@@ -103,10 +103,14 @@ def candidate_files(paths: Iterable[Path], date_range: DateRange) -> Iterator[Pa
         yield path
 
 
-def read_json_lines(path: Path, stats: ScanStats) -> Iterator[dict[str, object]]:
+def read_json_lines(
+    path: Path, stats: ScanStats, markers: Sequence[str] = ()
+) -> Iterator[dict[str, object]]:
     try:
         with path.open(encoding="utf-8") as transcript:
             for line in transcript:
+                if markers and not any(marker in line for marker in markers):
+                    continue
                 try:
                     record = json.loads(line)
                 except (json.JSONDecodeError, UnicodeDecodeError):
@@ -127,7 +131,8 @@ def claude_usage(
 
     for path in paths:
         fallback_project = path.parent.name
-        for record in read_json_lines(path, stats):
+        records = read_json_lines(path, stats, ('"usage"',))
+        for sequence, record in enumerate(records, 1):
             message = record.get("message")
             if not isinstance(message, dict) or message.get("role") != "assistant":
                 continue
@@ -146,7 +151,7 @@ def claude_usage(
                 key = ("message", message_id)
             else:
                 # Usage without either identifier cannot safely be deduplicated.
-                key = ("record", f"{path}:{record.get('uuid', id(record))}")
+                key = ("record", f"{path}:{record.get('uuid', sequence)}")
 
             model = message.get("model")
             latest[key] = Usage(
@@ -163,14 +168,14 @@ def claude_usage(
     yield from latest.values()
 
 
-def cumulative_usage(value: object) -> dict[str, int] | None:
+def cumulative_usage(value: object) -> Optional[dict[str, int]]:
     if not isinstance(value, dict):
         return None
     return {field: token_count(value.get(field)) for field in CODEX_CUMULATIVE_FIELDS}
 
 
 def usage_delta(
-    current: dict[str, int], previous: dict[str, int] | None
+    current: dict[str, int], previous: Optional[dict[str, int]]
 ) -> dict[str, int]:
     if previous is None or any(current[field] < previous[field] for field in current):
         return current.copy()
@@ -186,9 +191,12 @@ def codex_usage(
     for path in paths:
         project = "unknown"
         model = "unknown"
-        previous: dict[str, int] | None = None
+        previous: Optional[dict[str, int]] = None
 
-        for record in read_json_lines(path, stats):
+        records = read_json_lines(
+            path, stats, ('"session_meta"', '"turn_context"', '"token_count"')
+        )
+        for record in records:
             record_type = record.get("type")
             payload = record.get("payload")
             if not isinstance(payload, dict):
@@ -301,7 +309,12 @@ def plain_table(headers: Sequence[str], rows: Sequence[Sequence[object]]) -> str
     def format_row(row: Sequence[str]) -> str:
         cells = []
         for index, value in enumerate(row):
-            cells.append(value.rjust(widths[index]) if index >= numeric_start else value.ljust(widths[index]))
+            aligned = (
+                value.rjust(widths[index])
+                if index >= numeric_start
+                else value.ljust(widths[index])
+            )
+            cells.append(aligned)
         return "  ".join(cells)
 
     lines = [format_row(headers), "  ".join("-" * width for width in widths)]
@@ -322,7 +335,7 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Optional[Sequence[str]] = None) -> int:
     arguments = parser().parse_args(argv)
     if arguments.day is not None and (arguments.since is not None or arguments.until is not None):
         parser().error("--day cannot be combined with --since or --until")
