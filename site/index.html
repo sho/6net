@@ -109,6 +109,15 @@
   }
   button:hover{background:var(--stamp)}
   .fine{margin-top:12px; font-family:var(--mono); font-size:11.5px; color:var(--ink-soft)}
+  .pending{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:8px;
+    border:1.5px dashed var(--ink); background:#fffdf8; padding:13px 14px 13px 16px}
+  .pending span{flex:1; min-width:190px; font-family:var(--mono); font-size:12.5px; line-height:1.5; color:var(--ink-soft)}
+  .pending a{
+    font-family:var(--mono); font-size:12.5px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--ink); color:var(--paper); padding:12px 18px; text-decoration:none;
+    transition:background .15s ease;
+  }
+  .pending a:hover{background:var(--stamp)}
 
   /* footer */
   footer{border-top:1px solid var(--hairline); background:var(--paper-deep)}
@@ -177,11 +186,11 @@
       <p class="sub-dek">One email when something worth reading lands — no schedule, no funnel. Knowing the difference between a day and a story is, we're told, most of the job.</p>
     </div>
     <div class="reveal d4">
-      <form action="https://buttondown.com/api/emails/embed-subscribe/sixnet" method="post">
-        <input type="email" name="email" required placeholder="you@example.net" aria-label="Email address">
-        <button type="submit">Subscribe</button>
-      </form>
-      <p class="fine">Or just watch the repo — the archive is public anyway.</p>
+      <div class="pending">
+        <span>The list isn&rsquo;t open yet — the plumbing is still being built, in public, like everything else.</span>
+        <a href="https://github.com/sho/6net">Watch the repo</a>
+      </div>
+      <p class="fine">No addresses are collected here yet. When they are, we&rsquo;ll publish the count and never the list.</p>
     </div>
   </section>
 </main>
