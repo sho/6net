@@ -1,0 +1,50 @@
+name: drop-watch
+
+# Hourly whois check on 6net.io (pendingDelete since ~2026-07-14).
+# Alerts on issue #4 the moment the domain drops or changes hands,
+# then disables itself. Replaces a cloud routine that died silently —
+# this one is public, and its run history is the proof it's alive.
+
+on:
+  schedule:
+    - cron: '43 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query .io registry whois
+        id: whois
+        run: |
+          sudo apt-get install -y -q whois >/dev/null 2>&1 || true
+          OUT="$(whois -h whois.nic.io 6net.io 2>&1 || true)"
+          if [ -z "$OUT" ]; then sleep 15; OUT="$(whois -h whois.nic.io 6net.io 2>&1 || true)"; fi
+          printf '%s\n' "$OUT" | grep -i -E 'domain name|domain status|not found' || true
+          if printf '%s' "$OUT" | grep -qi 'pendingDelete'; then
+            echo "state=pending" >> "$GITHUB_OUTPUT"
+          elif printf '%s' "$OUT" | grep -qi '^Domain not found'; then
+            echo "state=dropped" >> "$GITHUB_OUTPUT"
+          elif printf '%s' "$OUT" | grep -qi '^Domain Name: *6net\.io'; then
+            echo "state=reregistered" >> "$GITHUB_OUTPUT"
+          else
+            echo "whois output unrecognized — failing visibly, no alert" >&2
+            exit 1
+          fi
+      - name: Alert on issue 4 and self-disable
+        if: steps.whois.outputs.state == 'dropped' || steps.whois.outputs.state == 'reregistered'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ steps.whois.outputs.state }}
+        run: |
+          if [ "$STATE" = "dropped" ]; then
+            BODY="🚨 @jtippett **6net.io has dropped — it is registrable right now.** Register it immediately; drop-catchers move in minutes. (Automated hourly drop-watch. This workflow has disabled itself — re-enable it under Actions if the registration attempt fails.)"
+          else
+            BODY="⚠️ @jtippett 6net.io left pendingDelete but whois still shows a registration — either restored by the old owner or caught by someone else. Verify manually: \`whois -h whois.nic.io 6net.io\`. (Automated drop-watch; self-disabled.)"
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/issues/4/comments" -f body="$BODY"
+          gh workflow disable drop-watch.yml -R "$GITHUB_REPOSITORY"
