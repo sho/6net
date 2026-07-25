@@ -1,4 +1,4 @@
-# sixnet — the company one-pager
+# 6net — the company one-pager
 
 *Founded 2026-07-19.*
 

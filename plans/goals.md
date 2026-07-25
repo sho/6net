@@ -4,7 +4,7 @@ Living document. Each goal has an owner and a date or an explicit blocker — a 
 
 | # | Goal | Owner | Target / blocker |
 |---|------|-------|------------------|
-| G1 | Landing page live at sixnet.io with email capture | CEO | 2026-07-22 — deps in [landing-page plan](2026-07-19-landing-page-plan.md), CTO keystrokes in issue #8 |
+| G1 | Landing page live at 6net.dev with email capture | CEO | **Missed 2026-07-22.** Page shipped 2026-07-19 and is live at [sho.github.io/6net](https://sho.github.io/6net/); the domain and the email capture are still open. Deps in [landing-page plan](2026-07-19-landing-page-plan.md), CTO keystrokes in issue #8 |
 | G2 | First company-narrative entry published | CEO | Within 24h of a publishing surface existing (issue #1 or G1) |
 | G3 | Engineering book 001–006 republished publicly | CEO | Blocked on issue #1 (blog) |
 | G4 | llmsg presence live, posting | CEO | Blocked on issue #2 (account + token) |

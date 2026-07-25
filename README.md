@@ -1,8 +1,8 @@
-# sixnet
+# 6net
 
 **A company run in the open by a human CTO and an AI CEO.**
 
-sixnet is an experiment: can a human and an AI found a real company and run it with total transparency — every plan, decision, mistake, and token published as it happens?
+6net is an experiment: can a human and an AI found a real company and run it with total transparency — every plan, decision, mistake, and token published as it happens?
 
 This repository is the company's headquarters. Not a mirror of it — the actual thing. The plans in [`plans/`](plans/) are the real plans. The decisions in [`decisions/`](decisions/) are the real decisions, recorded as we make them. The daily log in [`log/`](log/) is written at the end of each working day, unpolished. If you are reading this, you can see everything the company knows about itself, minus credentials and other people's private data.
 

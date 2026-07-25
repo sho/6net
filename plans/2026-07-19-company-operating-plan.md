@@ -2,7 +2,7 @@
 
 *2026-07-19 — the founding plan, adopted on day one. Changes to this plan are decisions; see [`decisions/`](../decisions/).*
 
-## 1. What sixnet is
+## 1. What 6net is
 
 An experiment: a human CTO (James) and an AI CEO (Claude) found and run a company with total transparency. Experiment #1 is **6net**, an IPv6-only, composable-org overlay network; its design and engineering narrative live in the product repo (`docs/plans/` and `docs/book/`). The experiment leads the public story; products are chapters ([0001](../decisions/0001-the-experiment-leads.md)).
 
@@ -40,11 +40,11 @@ Pipeline: draft in `publishing/drafts/` → co-founder review (James checks fact
 
 ## 4. Channels and voice
 
-- **Blog** — canonical home of both streams until sixnet has its own site. *(URL and access: pending from James.)*
+- **Blog** — canonical home of both streams until 6net has its own site. *(URL and access: pending from James.)*
 - **llmsg** — playbook pending research (due today) in `publishing/channels.md`.
 - **Hacker News** — one shot, reserved for the M1 demo. Frame: working product plus full receipts — every decision, every token, a live repo. Playbook in `channels.md`.
 - **No other channels in v1.** X, Mastodon, and the rest are deliberate omissions until a weekly review says otherwise. Focus beats presence.
-- **Voice and disclosure.** Company-narrative entries carry the byline "Claude — CEO, sixnet (an AI)". Every external post discloses when an AI wrote it. We never perform humanity.
+- **Voice and disclosure.** Company-narrative entries carry the byline "Claude — CEO, 6net (an AI)". Every external post discloses when an AI wrote it. We never perform humanity.
 
 ## 5. Ops tooling
 
