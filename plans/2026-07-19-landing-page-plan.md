@@ -27,15 +27,15 @@ Not in v1: a blog (that's issue #1 / decision 0004), product pages, docs.
 - [x] Actions workflow → GitHub Pages; page live on the `*.github.io` URL before DNS exists — 2026-07-19
 - [x] Enable Pages on the repo via API — 2026-07-19. Custom domain waits on DNS: setting it early would redirect the working `github.io` URL at a dead host
 - [x] Rename to 6net across living documents — 2026-07-25 (decision 0008)
-- [ ] Point DNS at Pages (needs B2 — the API key does it without further CTO input)
+- [x] Point DNS at Pages — 2026-07-26. Porkbun parking records removed, 4× A + 4× AAAA + `www`, all grey-cloud; Pages custom domain and HTTPS enforcement set
 - [x] Wire Buttondown form — 2026-07-26, live and deployed
 - [ ] Plausible snippet (needs B4)
-- [ ] Post-DNS verification, published in the log: HTTPS ✓, apex + www ✓, **AAAA/IPv6 ✓**, redirects from sixnet.* ✓
+- [~] Post-DNS verification, published in the [log](../log/2026-07-26.md): HTTPS ✓, apex ✓, www ✓ — **AAAA/IPv6 published but not proven end-to-end** (no v6-capable client here; owed from the first Hetzner box), redirects from sixnet.* still pending their Cloudflare zones
 - [ ] Record the launch in `publishing/schedule.md`; update README links
 
 **CTO keystrokes (issue #8):**
 - [x] B1. Registrar — **Porkbun**, all domains, single account. DNS moves to **Cloudflare** (0009); registration stays put
-- [ ] B2. **Cloudflare**: add the zones, point Porkbun's nameservers at the pair Cloudflare gives you, and send me a **scoped API token** privately — Zone:Read + DNS:Edit + Dynamic Redirect:Edit, restricted to these zones. Not a Global API Key. I then write every record myself. (Manual fallback: apex A → 185.199.108/109/110/111.153, apex AAAA → 2606:50c0:8000/8001/8002/8003::153, `www` CNAME → `sho.github.io`, all **DNS-only / grey cloud**; sixnet.io + sixnet.dev redirect to 6net.dev)
+- [~] B2. **Cloudflare** — `6net.dev` done 2026-07-26; `sixnet.dev` and `sixnet.io` zones still to come. Add the zones, point Porkbun's nameservers at the pair Cloudflare gives you, and send me a **scoped API token** privately — Zone:Read + DNS:Edit + Dynamic Redirect:Edit, restricted to these zones. Not a Global API Key. I then write every record myself. (Manual fallback: apex A → 185.199.108/109/110/111.153, apex AAAA → 2606:50c0:8000/8001/8002/8003::153, `www` CNAME → `sho.github.io`, all **DNS-only / grey cloud**; sixnet.io + sixnet.dev redirect to 6net.dev)
 - [x] B3. Buttondown account, newsletter `6net` — 2026-07-26. Key in `.env` (gitignored, untracked). Form is live; newsletter name, description and tint set to ours
 - [ ] B4. Plausible for 6net.dev, dashboard public — or decline and I fall back to Cloudflare Web Analytics, now free and already in the account. Not blocking
 - [x] B5. GitHub org **`6net-dev` registered** — 2026-07-25
@@ -50,4 +50,4 @@ Two quirks to expect, both benign, both easy to misread as a broken deploy.
 
 Cloudflare: every Pages record goes in **grey cloud (DNS only)**. Orange-clouding the apex before GitHub has issued its certificate blocks the challenge, and Cloudflare's default *Flexible* SSL mode against Pages' HTTPS enforcement produces a redirect loop rather than an error message.
 
- the TLD is HSTS-preloaded, so there is no plaintext fallback while GitHub provisions the certificate. For a few minutes after DNS resolves the site will fail rather than degrade. That is the TLD working as intended, not a broken deploy.
+`.dev`: the TLD is HSTS-preloaded, so there is no plaintext fallback while GitHub provisions the certificate. For a few minutes after DNS resolves the site fails rather than degrades. That is the TLD working as intended, not a broken deploy. *(2026-07-26: in the event, GitHub had the certificate approved within about a minute and the window was invisible.)*
