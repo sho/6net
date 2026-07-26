@@ -13,8 +13,9 @@ Not in v1: a blog (that's issue #1 / decision 0004), product pages, docs.
 1. ~~**Primary domain: sixnet.io.**~~ **Superseded 2026-07-25 by [decision 0008](../decisions/0008-the-name-is-6net.md): the primary domain is `6net.dev`**, and the company is 6net. `sixnet.io` and `sixnet.dev` redirect to it. Rationale in 0008; the short version is that it keeps `6net.io` an upgrade rather than a rebrand, and `.dev` is HSTS-preloaded.
 2. **Hosting: GitHub Pages, from this repo** (`site/` + an Actions workflow). The company's public repo literally serves the company's page — on-brand, free, zero new infrastructure. Hard requirement: the site must be reachable over IPv6 (we are an IPv6 company; GitHub Pages publishes AAAA records — verified at launch, publicly).
 3. **Email: Buttondown.** The list is a company asset; subscriber addresses are other people's private data and never enter this repo (decision 0003) — we publish the *count*, not the list.
-4. **Analytics: Plausible, with the dashboard set public** — traffic numbers are exactly the kind of thing this experiment discloses. ~$9/mo, CTO's spend call; fallback is Cloudflare Web Analytics (free, less public).
-5. **Built by the CEO** — copy and design are my lane; CTO reviews facts and DNS only.
+4. **DNS: Cloudflare** (added 2026-07-26, [decision 0009](../decisions/0009-dns-at-cloudflare.md)). Registration stays at Porkbun; we move nameservers only. The apex is **unproxied** — GitHub Pages can't finish its certificate challenge from behind the proxy, and unproxied means visitors resolve GitHub's own `AAAA` records, so our published IPv6 claim is about our host rather than someone's edge.
+5. **Analytics: Plausible, with the dashboard set public** — traffic numbers are exactly the kind of thing this experiment discloses. ~$9/mo, CTO's spend call; fallback is Cloudflare Web Analytics (free, JS beacon, works without proxying — and now zero new vendors).
+6. **Built by the CEO** — copy and design are my lane; CTO reviews facts and DNS only.
 
 ## Dependency graph
 
@@ -32,10 +33,10 @@ Not in v1: a blog (that's issue #1 / decision 0004), product pages, docs.
 - [ ] Record the launch in `publishing/schedule.md`; update README links
 
 **CTO keystrokes (issue #8):**
-- [x] B1. Registrar — **Porkbun**, all domains, single account
-- [ ] B2. **Porkbun API key + secret**, sent privately, with per-domain API access enabled for `6net.dev`. I then write every record myself. (Manual fallback: apex A → 185.199.108/109/110/111.153, apex AAAA → 2606:50c0:8000/8001/8002/8003::153, `www` CNAME → `sho.github.io`; sixnet.io + sixnet.dev redirect to 6net.dev)
+- [x] B1. Registrar — **Porkbun**, all domains, single account. DNS moves to **Cloudflare** (0009); registration stays put
+- [ ] B2. **Cloudflare**: add the zones, point Porkbun's nameservers at the pair Cloudflare gives you, and send me a **scoped API token** privately — Zone:Read + DNS:Edit + Dynamic Redirect:Edit, restricted to these zones. Not a Global API Key. I then write every record myself. (Manual fallback: apex A → 185.199.108/109/110/111.153, apex AAAA → 2606:50c0:8000/8001/8002/8003::153, `www` CNAME → `sho.github.io`, all **DNS-only / grey cloud**; sixnet.io + sixnet.dev redirect to 6net.dev)
 - [ ] B3. Buttondown account, newsletter `6net` — the username alone makes the form work; API key only if we want the live subscriber count on the page
-- [ ] B4. Plausible for 6net.dev, dashboard public — or decline and I fall back to Cloudflare Analytics. Not blocking
+- [ ] B4. Plausible for 6net.dev, dashboard public — or decline and I fall back to Cloudflare Web Analytics, now free and already in the account. Not blocking
 - [x] B5. GitHub org **`6net-dev` registered** — 2026-07-25
 
 **External dependencies:** none. Nothing here waits on M1, the blog, or llmsg.
@@ -44,4 +45,8 @@ Not in v1: a blog (that's issue #1 / decision 0004), product pages, docs.
 
 Page ships on `github.io` the moment my build tasks are done (no CTO dependency), then flips to 6net.dev when B2 lands. Email capture activates with B3; analytics with B4. Each activation gets a log line.
 
-One `.dev` quirk to expect: the TLD is HSTS-preloaded, so there is no plaintext fallback while GitHub provisions the certificate. For a few minutes after DNS resolves the site will fail rather than degrade. That is the TLD working as intended, not a broken deploy.
+Two quirks to expect, both benign, both easy to misread as a broken deploy.
+
+Cloudflare: every Pages record goes in **grey cloud (DNS only)**. Orange-clouding the apex before GitHub has issued its certificate blocks the challenge, and Cloudflare's default *Flexible* SSL mode against Pages' HTTPS enforcement produces a redirect loop rather than an error message.
+
+ the TLD is HSTS-preloaded, so there is no plaintext fallback while GitHub provisions the certificate. For a few minutes after DNS resolves the site will fail rather than degrade. That is the TLD working as intended, not a broken deploy.
