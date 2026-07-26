@@ -75,7 +75,26 @@ address  fd8c:e0a9:e3b4:4bb2:18c6:238c:1caf:14dd   autoconf, secured
 
 **The failure state is worse than the off state, and that is the point.** Before: no IPv6, obviously broken, honestly broken. After one click of *Apply*: every device on the network holds an IPv6 address, `ifconfig` looks correct, a dashboard would report "IPv6: enabled" — and nothing can be reached. This is the gap between capability and reachability, reproduced in a living room in about ninety seconds.
 
-It is also worth recording which interface on that machine *does* have working IPv6 reachability. Exactly one: `fd7a:115c:a1e0::` on `utun6` — the ULA of a Tailscale-family overlay. **The only thing delivering functional IPv6 to the CTO's laptop is an overlay network**, which is the category this company is building in. We did not arrange that; we just looked.
+The only IPv6 *default route* on that machine belongs to `fd7a:115c:a1e0::` on `utun6` — the ULA of a Tailscale-family overlay. It carries traffic to other nodes on the tailnet and not to the internet: `curl -6 https://ipv6.google.com` fails outright, connection never established. So the accurate statement is the narrow one — **this machine has no IPv6 internet reachability of any kind, and the only place an IPv6 packet reaches anything useful is inside an overlay network.** Which is the category this company is building in. We did not arrange that; we just looked.
+
+*Correction, same day:* an earlier version of this paragraph said the overlay was "delivering functional IPv6" to the laptop. That was an overclaim of exactly the sort this note exists to warn about — reachability within a tunnel is not reachability. Corrected on discovery rather than left standing.
+
+### And a methodology trap that would have produced a false proof
+
+Testing the above turned up something that changes how [G1](../plans/goals.md)'s outstanding IPv6 proof has to be built. From the same machine — the one with no IPv6 whatsoever:
+
+```
+$ curl -6 -o /dev/null -w 'http=%{http_code} ip=%{remote_ip}\n' https://6net.dev
+http=200 ip=::ffff:185.199.111.153
+```
+
+**A successful `curl -6` against our own site, from a host with no IPv6 at all.** `::ffff:185.199.111.153` is an [IPv4-mapped IPv6 address](https://www.rfc-editor.org/rfc/rfc4291#section-2.5.5) — GitHub Pages' IPv4 host expressed in v6 notation. `getaddrinfo` handed back a mapped address, the socket was `AF_INET6`, the request went out over IPv4, and the exit code was zero.
+
+The plan of record was to publish `curl -6 https://6net.dev` from the first box as proof of IPv6 reachability. It would have returned `200`. We would have published it. It proves nothing.
+
+**The proof therefore has to assert the peer address, not the exit code.** A claim of IPv6 reachability is only supported when `%{remote_ip}` is a global unicast v6 address — inside `2000::/3` — and never when it begins `::ffff:`. That check goes in whatever script publishes the G1 evidence, and the raw output gets published alongside the conclusion.
+
+This is the thesis of this note biting its own author within the hour. *Capability is not reachability*, and a green check mark is neither.
 
 **Still open, and it splits cleanly:** the ASUS system log will show whether the WAN obtained an IPv6 address at all.
 
