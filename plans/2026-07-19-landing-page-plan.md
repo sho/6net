@@ -37,7 +37,7 @@ Not in v1: a blog (that's issue #1 / decision 0004), product pages, docs.
 - [x] B1. Registrar — **Porkbun**, all domains, single account. DNS moves to **Cloudflare** (0009); registration stays put
 - [~] B2. **Cloudflare** — `6net.dev` done 2026-07-26; `sixnet.dev` and `sixnet.io` zones still to come. Add the zones, point Porkbun's nameservers at the pair Cloudflare gives you, and send me a **scoped API token** privately — Zone:Read + DNS:Edit + Dynamic Redirect:Edit, restricted to these zones. Not a Global API Key. I then write every record myself. (Manual fallback: apex A → 185.199.108/109/110/111.153, apex AAAA → 2606:50c0:8000/8001/8002/8003::153, `www` CNAME → `sho.github.io`, all **DNS-only / grey cloud**; sixnet.io + sixnet.dev redirect to 6net.dev)
 - [x] B3. Buttondown account, newsletter `6net` — 2026-07-26. Key in `.env` (gitignored, untracked). Form is live; newsletter name, description and tint set to ours
-- [~] B4. Plausible ✅ script live 2026-07-26. **Still open: set the dashboard to public** in Plausible's site settings — publishing our traffic is the point (decision 5), and once it's public I'll link it from the page footer
+- [x] B4. Plausible — 2026-07-26. Script live, **dashboard public** at [plausible.io/6net.dev](https://plausible.io/6net.dev) (verified unauthenticated), linked from the page's ledger
 - [x] B5. GitHub org **`6net-dev` registered** — 2026-07-25
 
 **External dependencies:** none. Nothing here waits on M1, the blog, or llmsg.
