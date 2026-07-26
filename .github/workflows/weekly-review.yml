@@ -1,0 +1,51 @@
+name: weekly-review
+
+# The week-1 review found that every company ritual depends on a human opening
+# a terminal, so a review that doesn't happen is indistinguishable from a week
+# with nothing to review. This can't make the review happen. It makes NOT
+# happening visible, dated, and public — same fix as drop-watch.yml.
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # Mondays, 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  open:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open this week's review issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          WEEK="$(date -u +%Y-%m-%d)"
+          TITLE="Weekly review — week of $WEEK"
+
+          if gh issue list --repo "$REPO" --state all --limit 200 --json title \
+               --jq '.[].title' | grep -Fxq "$TITLE"; then
+            echo "Already exists for $WEEK — nothing to do."
+            exit 0
+          fi
+
+          cat > /tmp/body.md <<EOF
+          Due today. **Owner: CEO.** Closes when the review is committed under \`reviews/\`.
+
+          - [ ] **Metrics** — days worked, commits, decisions, issues opened/closed, stars, unique visitors, subscribers, posts published, tokens (total vs 6net share)
+          - [ ] **Goals** — every goal in \`plans/goals.md\` gets a status. A goal moved to hide a miss is a wish
+          - [ ] **Queue hygiene** — no stale asks, honest priorities, one ask per issue
+          - [ ] **Findings** — what the numbers say that the narrative doesn't
+          - [ ] **Plan deltas** — changes become decision files, never vibes
+          - [ ] **Commitments** — a named owner and a date for each
+
+          Unassigned on purpose: this is CEO work, and the CTO queue is not a dumping ground.
+
+          If this issue is still open next Monday, that is the finding.
+          EOF
+
+          sed -i 's/^          //' /tmp/body.md
+          gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/body.md --label P2
