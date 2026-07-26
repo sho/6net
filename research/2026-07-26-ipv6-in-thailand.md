@@ -55,3 +55,29 @@ Three reasons it isn't sufficient, all of which we have now met personally in on
 APNIC's measurement is *capability* — whether a sampled user's browser can complete an IPv6 fetch — via advertisement-delivered sampling. It says nothing about inbound reachability, which is the axis this company actually cares about, and it undercounts networks where users are behind proxies. It is the best public per-ISP data available and it is not a substitute for measuring the thing ourselves, which is what `ops1` is for.
 
 **Open, and not ours to close:** whether the CTO's missing v6 is the plan, the CPE, or the ISP. One call.
+
+---
+
+## Specimen: what happened when the CTO turned IPv6 on
+
+*Appended the same afternoon. This is first-party evidence for the thesis above, acquired by accident.*
+
+The CTO enabled IPv6 on his router — an ASUS ZenWiFi AX, firmware `3.0.0.4.388_24814`, `Connection type: Native`, `Interface: PPP` (so IPv6 rides the PPPoE session), with DHCP-PD and Accept Default Route both enabled. The router's own status page then showed **`LAN IPv6 Address`, `LAN Prefix Length` and `LAN IPv6 Prefix` all blank** — no prefix was delegated by the ISP.
+
+What the LAN got instead, measured from a macOS client on the same network:
+
+```
+prefix   fd8c:e0a9:e3b4:4bb2::/64                  learned via RA on en0
+address  fd8c:e0a9:e3b4:4bb2:18c6:238c:1caf:14dd   autoconf, secured
+```
+
+`fd8c:` falls inside `fd00::/8` — an [RFC 4193](https://www.rfc-editor.org/rfc/rfc4193) **Unique Local Address**, the IPv6 equivalent of `192.168.0.0/16`. It is not globally routable. Receiving no delegation, the router generated a private prefix and began advertising it. Corroborating detail: it does *not* advertise itself as a default route — the `en0` entry in the neighbour-discovery router list carries empty flags and no IPv6 default route exists on that interface, because the router has no upstream IPv6 to offer. The client is not at fault; `net.inet6.ip6.accept_rtadv` is `1` and it accepted exactly what was advertised.
+
+**The failure state is worse than the off state, and that is the point.** Before: no IPv6, obviously broken, honestly broken. After one click of *Apply*: every device on the network holds an IPv6 address, `ifconfig` looks correct, a dashboard would report "IPv6: enabled" — and nothing can be reached. This is the gap between capability and reachability, reproduced in a living room in about ninety seconds.
+
+It is also worth recording which interface on that machine *does* have working IPv6 reachability. Exactly one: `fd7a:115c:a1e0::` on `utun6` — the ULA of a Tailscale-family overlay. **The only thing delivering functional IPv6 to the CTO's laptop is an overlay network**, which is the category this company is building in. We did not arrange that; we just looked.
+
+**Still open, and it splits cleanly:** the ASUS system log will show whether the WAN obtained an IPv6 address at all.
+
+- **No WAN v6** → IPv6CP or prefix delegation never happened, and this is the plan or the ISP. Tests the hypothesis above: the non-CGNAT IPv4 request moved him to a product without v6.
+- **A WAN v6 address but nothing to delegate** → the ISP granted exactly one address and no prefix, leaving nothing for anything behind the router. That is CGNAT's logic reappearing on the protocol that was supposed to retire it, and it is the better story of the two.
