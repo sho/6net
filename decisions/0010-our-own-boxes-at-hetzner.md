@@ -48,3 +48,38 @@ Under [0002](0002-lanes-human-cto-ai-ceo.md) the CEO owns operations and the CTO
 ## Revisit when
 
 We have paying customers, or a region where Hetzner has no presence and latency matters.
+
+---
+
+## Amendment, 2026-07-26 — we live in the wrong hemisphere for this, and here are the numbers
+
+Written after the CTO pointed out that our nearest Hetzner presence is Singapore. Both founders are in **Bangkok**; the company's home region is `ap-southeast`. Every default this file reasoned from — Falkenstein is cheapest, `eu-central` is the obvious network zone — was reasoning from somebody else's geography.
+
+**Hetzner's entire Asia-Pacific footprint is one location.** No Tokyo, no Sydney, no Mumbai, no Jakarta. One datacentre, `sin-dc1`, about 1,000 km from our desks.
+
+It is also the thinnest and most expensive part of their fleet. The cheapest machine you can actually create there is `cpx12` — 1 vCPU, 2 GB, $17.99/month. `cpx11` is listed as *supported* in `sin-dc1` but appears in neither `available` nor `available_for_migration`, so it cannot be launched. In Falkenstein, $6.49 buys `cx23`: two cores and twice the memory.
+
+**But the price of the box is not the finding. The price of the bandwidth is.**
+
+| | Falkenstein | Singapore |
+|---|---|---|
+| included traffic | **22 TB** | **1.1 TB** |
+| overage, per TB gross | **$1.20** | **$8.30** |
+
+Twenty times less allowance, and seven times the marginal price beyond it.
+
+A relay network is pure egress. Bandwidth is not an overhead line for this product, it *is* the unit cost — the thing every pricing page we ever write has to be built on top of. Which means: **our home region is our most expensive region on the single metric that defines our business.** That is worth knowing in week one rather than in month nine, and it is the kind of thing you only find by reading the API instead of the marketing page.
+
+For context, and it does not rescue the position so much as explain why we are still here: the Fly egress pricing this file declined was $0.04/GB in Asia-Pacific — **$40/TB**, against Hetzner Singapore's $8.30. Five times better. The original decision stands; the margin is much narrower than the European numbers made it look.
+
+### What changes
+
+- **`ops1` goes to Falkenstein anyway.** It is a control-plane box — cron, `curl`, `git`, an IPv6 vantage point. 170 ms from Bangkok is irrelevant to work with no human waiting on it, and $7.09/month for two cores beats $18.59 for one. This file already said to take the cheap IPv4 on control-plane boxes; it now also says to take the cheap continent.
+- **The relay fleet is a genuinely open question, and it is not answered by this file.** The revisit trigger below reads *"a region where Hetzner has no presence and latency matters."* We are living in one. Hetzner covers a single city in our entire hemisphere, at seven times the marginal bandwidth cost, and relays have to sit near users. Whoever carries our APAC packets will be chosen on the egress curve, not on the server price — and it may not be Hetzner.
+- **Nothing here touches the product.** Where relays go is architecture, which is the CTO's ([0002](0002-lanes-human-cto-ai-ceo.md)). This is the CEO putting the cost shape on the record so that decision is made with numbers in front of it.
+
+### One domestic finding, filed because it is too on-the-nose to leave out
+
+The machine this company is currently run from — a home connection in Bangkok — **hands out no global IPv6 address at all.** Zero. That is the actual reason the IPv6 proof on [G1](../plans/goals.md) is still outstanding, and why the landing page says the proof is pending rather than claiming it.
+
+An IPv6-only networking company, whose founders cannot get IPv6 at home, in a city of eleven million. We have not yet established whether that is the ISP or the local network, and it is worth finding out — but either way it is the market we are building for, sitting in our own living room.
